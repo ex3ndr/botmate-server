@@ -1,0 +1,207 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+//
+// Authentication and onboarding
+//
+
+model AuthSession {
+    id    String @id
+    login String @unique
+}
+
+model SessionToken {
+    id        String   @id @default(cuid())
+    key       String   @unique
+    user      User?    @relation(fields: [userId], references: [id])
+    userId    String?
+    login     String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model OnboardingState {
+    login     String  @id
+    username  String? @unique
+    firstName String?
+    lastName  String?
+}
+
+//
+// User
+//
+
+model User {
+    id String @id @default(cuid())
+
+    // Connection info
+    login    String
+    username String
+
+    // Profile
+    firstName    String
+    lastName     String?
+    bot          Boolean @default(false)
+    system       Boolean @default(false)
+    experimental Boolean @default(false)
+    developer    Boolean @default(false)
+
+    // Meta
+    deletedAt DateTime?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+
+    // Tokens
+    SessionToken SessionToken[]
+
+    // Sessions
+    Update         Update[]
+    Memory         Memory[]
+    Feed           Feed[]
+    FeedItem       FeedItem[]
+    SystemUser     SystemUser[]
+    PushTokens     PushTokens[]
+    PersonalTokens PersonalTokens[]
+}
+
+model SystemUser {
+    tag    String @id
+    userId String
+    user   User   @relation(fields: [userId], references: [id])
+}
+
+//
+// Feed
+//
+
+model Memory {
+    id        String   @id @default(cuid())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    String
+    index     Int
+    data      Json
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, index])
+}
+
+model Feed {
+    id Int @id @default(autoincrement())
+
+    // Reference
+    userId   String
+    user     User       @relation(fields: [userId], references: [id])
+    tag      String
+    FeedItem FeedItem[]
+
+    // State
+    seq Int @default(0)
+
+    @@unique([userId, tag])
+}
+
+model FeedItem {
+    // ID
+    fid  Int
+    feed Feed @relation(fields: [fid], references: [id])
+    seq  Int
+
+    // Data
+    byId    String
+    by      User   @relation(fields: [byId], references: [id])
+    content Json
+
+    // Meta
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([fid, seq])
+}
+
+//
+// API Tokens
+//
+
+model PersonalTokens {
+    id        String    @id @default(cuid())
+    user      User      @relation(fields: [userId], references: [id])
+    userId    String
+    token     String    @unique
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    usedAt    DateTime?
+}
+
+//
+// Push Notifications
+//
+
+model PushTokens {
+    id        String   @id @default(cuid())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    String
+    token     String   @unique
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+//
+// Updates
+//
+
+model Update {
+    // Connection info
+    userId String
+    seq    Int
+    user   User   @relation(fields: [userId], references: [id])
+
+    // Data
+    repeatKey String?
+    data      Json
+
+    // Meta
+    createdAt DateTime @default(now())
+
+    // PK
+    @@unique([userId, seq])
+}
+
+//
+// Utilities
+//
+
+model GlobalLock {
+    key     String   @id @default(cuid())
+    value   String
+    timeout DateTime
+}
+
+model RepeatKey {
+    key       String   @id
+    value     String
+    createdAt DateTime @default(now())
+    expiresAt DateTime
+}
+
+model Task {
+    id        String   @id @default(cuid())
+    queue     String
+    index     Int
+    data      Json
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([queue, index])
+}
+
+model SimpleCache {
+    key   String @id
+    value String
+}
