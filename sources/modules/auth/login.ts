@@ -4,11 +4,12 @@ import { validateNumber } from "./twilio";
 import { isTestNumber } from "./isTestNumber";
 
 export async function normalizeLogin(login: string) {
-    if (isValidPhoneNumber(login)) {
-        let n = normalizePhone(login);
-        if (!n) {
-            return null;
-        }
+    // Trim inputs
+    login = login.trim();
+
+    // Try parsing as phone
+    let n = normalizePhone(login);
+    if (n) {
         return { key: 'phone:' + n, normalized: n, type: 'phone' as const };
     } else {
         let e = normalizeEmail(login);
