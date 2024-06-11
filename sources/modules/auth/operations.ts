@@ -31,7 +31,7 @@ export async function startAuth(login: string, key: string): Promise<AuthStartRe
         // Request verification code
         const output = await twilio.verify.v2.services(process.env.TWILIO_SERVICE_VERIFY!)
             .verifications
-            .create({ to: normalizedLogin.key, channel: normalizedLogin.type });
+            .create({ to: normalizedLogin.normalized, channel: normalizedLogin.type });
         if (output.status !== 'pending') {
             return { ok: false, error: 'too_many_attempts' };
         }
