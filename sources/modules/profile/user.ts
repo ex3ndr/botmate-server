@@ -48,10 +48,17 @@ export async function getUserProfilePrivate(tx: Tx, uid: string) {
     let firstName: string = 'Deleted';
     let lastName: string | null = 'Account';
     let roles: string[] = [];
+    let email: string | null = null;
+    let phone: string | null = null;
     if (user) {
         username = user.username;
         firstName = user.firstName;
         lastName = user.lastName;
+        if (user.login.startsWith('phone:')) {
+            phone = user.login.slice(6);
+        } else if (user.login.startsWith('email:')) {
+            email = user.login.slice(6);
+        }
         if (user.experimental) {
             roles.push('experimental');
         }
@@ -62,6 +69,8 @@ export async function getUserProfilePrivate(tx: Tx, uid: string) {
     return {
         id: uid,
         username,
+        email,
+        phone,
         firstName,
         lastName,
         roles
