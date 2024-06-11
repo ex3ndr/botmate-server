@@ -5,6 +5,7 @@ import { generateSafeToken } from "../crypto/generateSafeToken";
 import { User } from "@prisma/client";
 import { normalizeLogin, validateLogin } from "./login";
 import { getUserByLogin } from "../profile/user";
+import { isTestNumber } from "./isTestNumber";
 
 const lock = new AsyncLock();
 export type AuthStartResponse = { ok: true, login: string } | { ok: false, error: 'invalid_login' | 'too_many_attempts' };
@@ -20,6 +21,11 @@ export async function startAuth(login: string, key: string): Promise<AuthStartRe
         // Verify
         if (!await validateLogin(normalizedLogin)) {
             return { ok: false, error: 'invalid_login' };
+        }
+
+        // Check if test number
+        if (normalizedLogin.type === 'phone' && isTestNumber(normalizedLogin.normalized)) {
+            return { ok: true, login: normalizedLogin.normalized };
         }
 
         // Request verification code
@@ -44,14 +50,21 @@ export async function completeAuth(login: string, key: string, code: string): Pr
             return { ok: false, error: 'invalid_login' };
         }
 
-        const output = await twilio.verify.v2.services(process.env.TWILIO_SERVICE_VERIFY!)
-            .verificationChecks
-            .create({ to: normalizedLogin.normalized, code: code });
-        if (output.status === 'pending') {
-            return { ok: false, error: 'invalid_code' };
-        }
-        if (output.status === 'canceled') {
-            return { ok: false, error: 'expired_code' };
+        // Verify
+        if (normalizedLogin.type === 'phone' && isTestNumber(normalizedLogin.normalized)) {
+            if (code !== normalizedLogin.normalized.slice(normalizedLogin.normalized.length - 6)) {
+                return { ok: false, error: 'invalid_code' };
+            }
+        } else {
+            const output = await twilio.verify.v2.services(process.env.TWILIO_SERVICE_VERIFY!)
+                .verificationChecks
+                .create({ to: normalizedLogin.normalized, code: code });
+            if (output.status === 'pending') {
+                return { ok: false, error: 'invalid_code' };
+            }
+            if (output.status === 'canceled') {
+                return { ok: false, error: 'expired_code' };
+            }
         }
 
         // Generate token
