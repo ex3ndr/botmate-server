@@ -30,8 +30,8 @@ export async function startApi() {
         allowedHeaders: '*',
         methods: ['GET', 'POST']
     });
-    app.decorateRequest('setAuth', function (email: string, id: string, user: string | null, deleted: boolean | null) {
-        (this as any).auth = { email, user, id, deleted };
+    app.decorateRequest('setAuth', function (login: string, id: string, user: string | null, deleted: boolean | null) {
+        (this as any).auth = { login, user, id, deleted };
     });
     app.decorateRequest('setAuthNone', function () {
         (this as any).auth = null;

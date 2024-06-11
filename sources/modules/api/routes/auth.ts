@@ -112,5 +112,5 @@ export function authID(request: FastifyRequest) {
 }
 
 export function authRaw(request: FastifyRequest) {
-    return (request as any).auth as { email: string, id: string, user: string | null, deleted: boolean | null } | null;
+    return (request as any).auth as { login: string, id: string, user: string | null, deleted: boolean | null } | null;
 }
