@@ -37,7 +37,7 @@ export async function startApi() {
         (this as any).auth = null;
     });
     app.get('/', function (request, reply) {
-        reply.send('Welcome to BotMate API!');
+        reply.send('Welcome to Botmate API!');
     });
 
     if (hasRole('api')) {
