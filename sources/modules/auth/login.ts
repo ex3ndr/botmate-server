@@ -32,6 +32,19 @@ export async function validateLogin(login: { normalized: string, type: 'email' |
         }
         return await validateNumber(login.normalized);
     } else if (login.type === 'email') {
+        let parts = login.normalized.split('@');
+        if (parts.length !== 2) {
+            return false;
+        }
+        if (parts[0].length === 0 || parts[1].length === 0) {
+            return false;
+        }
+        if (parts[0].length > 64 || parts[1].length > 255) {
+            return false;
+        }
+        if (parts[0].startsWith('.') || parts[0].endsWith('.') || parts[1].startsWith('.') || parts[1].endsWith('.')) {
+            return false;
+        }
         return true; // TODO email validation   
     } else {
         return false;
